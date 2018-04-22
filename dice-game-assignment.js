@@ -9,7 +9,7 @@ startGamblin( gamePrompt, currentMoney );
 }
 
 function startGamblin( game, currentMoney = 100, wager = 2){
-	if (game == 1){										//EFFING SWITCH CASE WON'T WORK
+	if (game == 1){										
 		console.log("Playing Black Jack; Starting with " + currentMoney);
 		currentMoney = blackJack(currentMoney, wager);
 	}else if(game == 2){
@@ -149,11 +149,11 @@ let repeatingNumbers;
 	if (repeatSevens > 0){
 			result = (wager*repeatSevens);
 	}
-		//If you guys see a straight here while grading, please let me know, I never got one
+		
 	if (checkForStraight(slotsArray) >= 3){
 		result = (Math.pow(wager,checkForStraight));
 	}
-	//you are more likely to see the results of this section if the currentDice variable was reduced
+	
 	slotsArrayCopy = slotsArray.filter(removeDuplicates);
 	if (slotsArrayCopy.length == 2){
 		repeatingNumbers = arrayIndicesComparison(slotsArrayCopy,slotsArray);
@@ -232,33 +232,29 @@ let matchingNumbers;
 }
 
 function threeCardPoker(currentMoney, wager){
-let currentDice;
-let minimum;
 let result = 0;
-let playerCardArray;
-let dealerCardArray;
+let playerCardArray = [];
+let dealerCardArray = [];
 let raiseOrFold;
+let finalCardArray = [];
+let finalCardArrayCopy;
 
-	console.log("Your Cards:")
 	playerCardArray = threeCardArrays();
-	console.log(playerCardArray);		
+	console.log("Your Cards:");
+	console.log(playerCardArray);
+
 	raiseOrFold = prompt("1 = Raise, 2 = Fold");
 	if (raiseOrFold == 1){
-		dealerCardArray = threeCardArrays();
-		console.log("Dealer's Cards:");	
-		
-		//if dealerCardArray[i] == playerCardArray[j] (for first 3 index spots) then splice 'n' slice index and get a new one
-	for (let m = 0; m < 3; m++){
-		for (let n = 0; n < 3; n++){
-			if (playerCardArray[m] == dealerCardArray[n]){
-				dealerCardArray.splice(n, 1);
-				dealerCardArray = dealerCardArray.slice(0, 2);
-				dealerCardArray = threeCardArrays(dealerCardArray);
-			}
+		while(dealerCardArray.length !== playerCardArray.length){
+		dealerCardArray = threeCardArrays(dealerCardArray);
+		checkForDuplicatesInOtherArrays(playerCardArray, dealerCardArray);
 		}
-	}
-		console.log(dealerCardArray);	
+		playerCardArray = pokerHandResult(playerCardArray);
+		dealerCardArray = pokerHandResult(dealerCardArray);
 		
+		console.log("Dealer's Cards:");
+		console.log(dealerCardArray);
+
 		if ((dealerCardArray[4] == 1) && (dealerCardArray[3] < 12 )){		//if dealer has 12 or better then continue comparison, else result = (wager)
 			result = (wager);
 		} else if (dealerCardArray[dealerCardArray.length - 1] > playerCardArray[playerCardArray.length - 1]){
@@ -280,87 +276,103 @@ let raiseOrFold;
 }
 
 function threeCardArrays (finalCardArray = []){
-let currentDice;
-let minimum;
 let numberCard;
 let suit;
 let numbersCheck = [];
 let suitsCheck = [];
 let finalCardArrayCopy;
-let straight = 0;
-	//used a while loop for the sake of removing duplicate cards
-	//for example, so player/dealer does not end up with 4H, 4H, 2H
+
 	while (finalCardArray.length < 3){ 			
-		currentDice = 13; //13
-		minimum = 2;
-		numberCard = roll(currentDice, minimum);
-		currentDice = 4; //4
-			suit = roll(currentDice);
-				if (suit == 1){		//need to find an easier way than if statements
-					suit = "H";
-				} else if(suit == 2){
-					suit = "C";
-				} else if(suit == 3){
-					suit = "S";
-				} else {
-					suit = "D";
-			}
+		 numberCard = cardValue();
+		 suit = determineCardSuits();
+		 
 			finalCardArray.push(numberCard + suit);
 			finalCardArrayCopy = finalCardArray;
 			
 			finalCardArray = finalCardArray.filter(removeDuplicates);
 			if (finalCardArray.length == finalCardArrayCopy.length){
-				numbersCheck.push(numberCard);
-				suitsCheck.push(suit);
 			}
+	
 	}
-		//Straight Flush = 6
-		//three of a kind = 5
-		//Straight = 4
-		//Flush = 3
-		//Pair = 2
-		//High Card = 1
-		numbersCheck = numbersCheck.sort(function(a, b){return a-b});
-			if ((numbersCheck.length == 3) && (checkForStraight(numbersCheck) == 3)){
-				straight = 1;
-			}
+		return finalCardArray;
+}
+
+function pokerHandResult (pokerHand){
+let suit;
+let numberValue;
+let suitsCheck = [];
+let numbersCheck= [];
+let straight = 0;
+
+	for (let i = 0; i < pokerHand.length; i++){
+		// need to split characters of indices into seperate arrays to determine results
+		suitsCheck.push(pokerHand[i].slice(pokerHand[i].length - 1));
+		numbersCheck.push(pokerHand[i].slice(pokerHand[i], -1));
+	}
+	
+	numbersCheck = numbersCheck.sort(function(a, b){return a-b});
+	if ((numbersCheck.length == 3) && (checkForStraight(numbersCheck) == 3)){
+		straight = 1;
+	}
 		suitsCheck = suitsCheck.filter(removeDuplicates);
 		numbersCheck = numbersCheck.filter(removeDuplicates);
 		
 		if ((straight == 1) && (suitsCheck.length == 1)){	//straight flush
-			finalCardArray.push(Math.max(...numbersCheck))
-			finalCardArray.push(6); 
+			pokerHand.push(Math.max(...numbersCheck))
+			pokerHand.push(6); 
 		} else if (straight == 1){							//straight
-			finalCardArray.push(Math.max(...numbersCheck))
-			finalCardArray.push(4);
+			pokerHand.push(Math.max(...numbersCheck))
+			pokerHand.push(4);
 		} else if (suitsCheck.length == 1){					//flush	
-			finalCardArray.push(Math.max(...numbersCheck))
-			finalCardArray.push(3);
-		} else if(numbersCheck.length == 1){				//3 of a king
-			finalCardArray.push(Math.max(...numbersCheck))
-			finalCardArray.push(5);
+			pokerHand.push(Math.max(...numbersCheck))
+			pokerHand.push(3);
+		} else if(numbersCheck.length == 1){				//3 of a kind
+			pokerHand.push(Math.max(...numbersCheck))
+			pokerHand.push(5);
 		} else if(numbersCheck.length == 2){				//pair
-			finalCardArray.push(Math.max(...numbersCheck))
-			finalCardArray.push(2);
+			pokerHand.push(Math.max(...numbersCheck))
+			pokerHand.push(2);
 		} else {											//high card
-			finalCardArray.push(Math.max(...numbersCheck))
-			finalCardArray.push(1);
+			pokerHand.push(Math.max(...numbersCheck))
+			pokerHand.push(1);
 		}
-		return finalCardArray;
+	return pokerHand;
+}
+
+function checkForDuplicatesInOtherArrays(firstArray, secondArray){
+		
+	for (let m = 0; m < 3; m++){
+		for (let n = 0; n < 3; n++){
+			if (firstArray[m] == secondArray[n]){
+				secondArray.splice(n, 1);
+				secondArray = secondArray.slice(0, 2);
+				return secondArray;
+			}
+		}
+	}
+}
+
+function determineCardSuits(){
+let suit;
+let suitsArray = ["S", "D", "H", "C"];
+	suit = suitsArray [roll(suitsArray.length, 0)];
+	return suit;
+}
+
+function cardValue(){
+let cardNumber;	
+	let cardArray = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J" , "Q" , "K", "A"]
+	cardNumber = cardArray[roll(cardArray.length, 0)];
+	return cardNumber;
 }
 
 function roll(numOfSides, min = 1){
 	let randomNumber = Math.floor(Math.random() * numOfSides) + min;
 		return randomNumber;
 }
-
 //known bugs/broken logic
-//possibility of player and dealer getting same card in three card poker -- resolved
-//highest card is used for comparison instead of pair value in three card poker -- whatever
-//keno allows more than 5 inputs and compares the extras -- resolved
-//the whole craps function is a bug -- whatever -- fixed it...dumb
-
-function craps (currentMoney, wager){				//took this out due to the possibilty of very long/inifinte loops
+//highest card is used for comparison instead of pair value in three card poker
+function craps (currentMoney, wager){
 let currentDice = 6;
 let result = 0;
 let initialRoll = new Array (2);
